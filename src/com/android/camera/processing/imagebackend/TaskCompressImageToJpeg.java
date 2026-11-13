@@ -18,6 +18,7 @@ package com.android.camera.processing.imagebackend;
 
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.hardware.Camera;
 import android.location.Location;
 import android.media.CameraProfile;
 import android.net.Uri;
@@ -420,7 +421,14 @@ public class TaskCompressImageToJpeg extends TaskJpegEncode {
      * @return Quality level to use for JPEG compression.
      */
     protected int getJpegCompressionQuality () {
-        return CameraProfile.getJpegEncodingQualityParameter(CameraProfile.QUALITY_HIGH);
+        int quality = CameraProfile.getJpegEncodingQualityParameter(CameraProfile.QUALITY_HIGH);
+        // The one-argument API looks only for a rear camera and returns zero
+        // on front-camera-only devices. For a sole camera, use its own profile
+        // instead of recompressing the captured image at JPEG quality zero.
+        if (quality == 0 && Camera.getNumberOfCameras() == 1) {
+            quality = CameraProfile.getJpegEncodingQualityParameter(0, CameraProfile.QUALITY_HIGH);
+        }
+        return quality;
     }
 
     /**
